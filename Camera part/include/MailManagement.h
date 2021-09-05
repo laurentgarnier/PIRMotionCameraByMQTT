@@ -100,17 +100,17 @@ void smtpCallback(SMTP_Status status)
     TraceDebug("Message sent success: " + String(status.completedCount()));
     TraceDebug("Message sent failled: " + String(status.failedCount()));
     TraceDebug("----------------\n");
-    struct tm dt;
+    //struct tm dt;
 
     for (size_t i = 0; i < smtp.sendingResult.size(); i++)
     {
       /* Get the result item */
       SMTP_Result result = smtp.sendingResult.getItem(i);
-      localtime_r(&result.timesstamp, &dt);
+     // localtime_r(&result.timesstamp, &dt);
 
       TraceDebug("Message No: " + String(i + 1));
       TraceDebug("Status: " + result.completed ? "success" : "failed");
-      TraceDebug("Date/Time: " + String(dt.tm_year + 1900) + " " + String(dt.tm_mon + 1)  + " " +  String(dt.tm_mday) + " " +  String(dt.tm_hour) + " " + String(dt.tm_min)  + " " + String(dt.tm_sec));
+   //   TraceDebug("Date/Time: " + String(dt.tm_year + 1900) + " " + String(dt.tm_mon + 1)  + " " +  String(dt.tm_mday) + " " +  String(dt.tm_hour) + " " + String(dt.tm_min)  + " " + String(dt.tm_sec));
       TraceDebug("Recipient: " + String(result.recipients));
       TraceDebug("Subject: " + String(result.subject));
     }

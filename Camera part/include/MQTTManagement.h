@@ -17,7 +17,7 @@ void connecterAuServeurMQTT(String nomDuDevice, String categorieDuDevice, String
         if (client->connect(adresseMAC.c_str()))
         {
             Serial.println("Connexion au serveur OK");
-            abonnerAuTopic("Maison/FromDevice/Capteurs/MobilePIR", client);
+            abonnerAuTopic("Maison/Capteurs/MobilePIR/FromObject/State", client);
         }
     }
     Serial.println("");

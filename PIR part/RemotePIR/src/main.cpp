@@ -1,100 +1,75 @@
 #include <Arduino.h>
-#include "MQTTManagement.h"
+#include <Ticker.h>
+#include <PubSubClient.h>
 #include "WifiManagement.h"
 
-String ssidWifi = "CG";
-String passwordWifi = "12ImpEglAnt69";
-String serveurMqtt = "192.168.10.200";
+const char *ssidWifi = "CG";
+const char *passwordWifi = "12ImpEglAnt69";
+const char *serveurMqtt = "192.168.10.200";
+
 String nomDevice = "MobilePIR";
 String categorieDevice = "Capteurs";
 
 WiFiClient clientWifi;
 IPAddress adresseIP;
-String adresseMAC;
-PubSubClient *clientMqtt;
 
-const int PIR_PIN = 2;
+PubSubClient clientMqtt(clientWifi);
 
-int timingDernierEnvoiMessageMQTT;
-int intervalEntreDeuxMessagesMQTTEnSecondes = 300; // 5mn
-int timingDernierEnvoiMessageDeVie;
-int periodeEnvoiMessageDeVieEnSecondes = 30;
+Ticker ticker;
+
+void blink()
+{
+  //Inversion de l'état de la led
+  int state = digitalRead(LED_BUILTIN); // récupération de son état
+  digitalWrite(LED_BUILTIN, !state);    // on le positionne en opposition d'état
+}
+
+void connecterAuServeurMQTT()
+{
+  if (clientMqtt.connect(nomDevice.c_str()))
+  {
+    Serial.println("Connected to server");
+  }
+  else
+    Serial.println("I think connection failed!");
+}
 
 void envoyerLeMessageMQTT()
 {
-  Serial.println("Envoi message MQTT");
+  Serial.println(F("Envoi message MQTT"));
 
-  String payload = "PIR ON";
-  String topic = "Maison/FromDevice/" + categorieDevice + "/" + nomDevice;
-
-  publierMessage(topic, payload, clientMqtt);
-}
-
-void GererActivationPIR()
-{
-  digitalWrite(LED_BUILTIN, HIGH);
-  int timingCourant = millis();
-  if ((timingCourant - timingDernierEnvoiMessageMQTT) > (intervalEntreDeuxMessagesMQTTEnSecondes * 1000))
+  String topic = "Maison/" + categorieDevice + "/" + nomDevice + "/FromObject/State";
+  if (!clientMqtt.connected())
   {
-    envoyerLeMessageMQTT();
-    timingDernierEnvoiMessageMQTT = timingCourant;
+    connecterAuServeurMQTT();
   }
-  digitalWrite(LED_BUILTIN, LOW);
-}
-
-String macToStr(const uint8_t *mac)
-{
-  String result;
-  for (int i = 0; i < 6; ++i)
-  {
-    result += String(mac[i], 16);
-    if (i < 5)
-      result += ':';
-  }
-  return result;
+  Serial.println(F("Publication ON"));
+  clientMqtt.publish(topic.c_str(), "1");
+  delay(2000);
+  Serial.println(F("Publication OFF"));
+  clientMqtt.publish(topic.c_str(), "0");
 }
 
 void setup()
 {
-  Serial.begin(115200);
-  delay(10);
-
-  char bufferSSID[ssidWifi.length()];
-  ssidWifi.toCharArray(bufferSSID, ssidWifi.length());
-
-  char bufferPassword[passwordWifi.length()];
-  passwordWifi.toCharArray(bufferPassword, passwordWifi.length());
-
-  adresseIP = connectToWifi(bufferSSID, bufferPassword);
-  // Récupération de l'adresse MAC du device
-  uint8_t mac[6];
-  WiFi.macAddress(mac);
-  adresseMAC = macToStr(mac);
-
+  // Fait clignoter la LED intégré durant la connexion au réseau WiFi - Blink Bleu Led during WiFi connexion
   pinMode(LED_BUILTIN, OUTPUT);
+  ticker.attach(0.5, blink);
+
+  Serial.begin(115200);
+
+  adresseIP = connectToWifi(ssidWifi, passwordWifi);
+  clientMqtt.setServer(serveurMqtt, 1883);
+
+  envoyerLeMessageMQTT();
+
+  Serial.println("Je m'endors");
+  ticker.detach();
   digitalWrite(LED_BUILTIN, LOW);
-  pinMode(PIR_PIN, INPUT_PULLUP);
-  // attachInterrupt(digitalPinToInterrupt(PIR_PIN), GererActivationPIR, FALLING);
 
-  char bufferServeurMQTT[serveurMqtt.length()];
-  serveurMqtt.toCharArray(bufferServeurMQTT, serveurMqtt.length());
-  clientMqtt = new PubSubClient(bufferServeurMQTT, 1883, clientWifi);
-
-  connecterAuServeurMQTT(nomDevice, categorieDevice, adresseMAC, clientMqtt);
-  envoyerMessageDeVie(nomDevice, adresseMAC, adresseIP, clientMqtt, categorieDevice);
-
-  timingDernierEnvoiMessageMQTT = millis();
-  timingDernierEnvoiMessageDeVie = millis();
+  ESP.deepSleep(0);
 }
 
 void loop()
 {
-  int timingCourant = millis();
-  if ((timingCourant - timingDernierEnvoiMessageDeVie) > (periodeEnvoiMessageDeVieEnSecondes * 1000))
-  {
-    envoyerMessageDeVie(nomDevice, adresseMAC, adresseIP, clientMqtt, categorieDevice);
-    timingDernierEnvoiMessageDeVie = timingCourant;
-  }
-  if (digitalRead(PIR_PIN) == HIGH)
-    GererActivationPIR();
 }
