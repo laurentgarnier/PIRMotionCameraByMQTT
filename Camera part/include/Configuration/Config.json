@@ -1,8 +1,8 @@
 {
-    "ssid": "CG",
-    "ssidPwd": "12ImpEglAnt69",
+    "ssid": "",
+    "ssidPwd": "",
     "emailSenderAccount": "maisoncroziergarnier@gmail.com",
-    "emailSenderPassword": "GMAC@s77L*74IL",
+    "emailSenderPassword": "",
     "smtpServer": "smtp.gmail.com",
     "smtpServerPort": 465,
     "emailSender": "Filou CAM",
