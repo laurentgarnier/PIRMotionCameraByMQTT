@@ -3,8 +3,8 @@
 #include <PubSubClient.h>
 #include "WifiManagement.h"
 
-const char *ssidWifi = "CG";
-const char *passwordWifi = "12ImpEglAnt69";
+const char *ssidWifi = "";
+const char *passwordWifi = "";
 const char *serveurMqtt = "192.168.10.200";
 
 String nomDevice = "MobilePIR";
